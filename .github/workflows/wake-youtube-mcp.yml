@@ -1,0 +1,33 @@
+name: Wake YouTube MCP
+
+on:
+  schedule:
+    - cron: "*/13 * * * *"
+
+  workflow_dispatch:
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wake YouTube MCP
+        env:
+          YOUTUBE_MCP_WAKE_URL: ${{ vars.YOUTUBE_MCP_WAKE_URL }}
+        run: |
+          if [ -z "$YOUTUBE_MCP_WAKE_URL" ]; then
+            echo "YOUTUBE_MCP_WAKE_URL is not configured"
+            exit 1
+          fi
+
+          echo "Waking YouTube MCP..."
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --max-time 30 \
+            "$YOUTUBE_MCP_WAKE_URL"
+
+          echo
+          echo "YouTube MCP wake request completed."
