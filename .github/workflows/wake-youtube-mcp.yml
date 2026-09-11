@@ -1,4 +1,4 @@
-name: Wake YouTube MCP
+name: Wake Services
 
 on:
   schedule:
@@ -13,9 +13,9 @@ jobs:
     steps:
       - name: Wake YouTube MCP
         env:
-          YOUTUBE_MCP_WAKE_URL: ${{ vars.YOUTUBE_MCP_WAKE_URL }}
+          WAKE_URL: ${{ vars.YOUTUBE_MCP_WAKE_URL }}
         run: |
-          if [ -z "$YOUTUBE_MCP_WAKE_URL" ]; then
+          if [ -z "$WAKE_URL" ]; then
             echo "YOUTUBE_MCP_WAKE_URL is not configured"
             exit 1
           fi
@@ -27,7 +27,28 @@ jobs:
             --silent \
             --show-error \
             --max-time 30 \
-            "$YOUTUBE_MCP_WAKE_URL"
+            "$WAKE_URL"
 
           echo
           echo "YouTube MCP wake request completed."
+
+      - name: Wake Second Service
+        env:
+          WAKE_URL: ${{ vars.SECOND_SERVICE_WAKE_URL }}
+        run: |
+          if [ -z "$WAKE_URL" ]; then
+            echo "SECOND_SERVICE_WAKE_URL is not configured"
+            exit 1
+          fi
+
+          echo "Waking second service..."
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --max-time 30 \
+            "$WAKE_URL"
+
+          echo
+          echo "Second service wake request completed."
