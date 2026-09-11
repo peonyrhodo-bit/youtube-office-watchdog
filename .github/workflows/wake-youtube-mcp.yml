@@ -23,11 +23,10 @@ jobs:
           echo "Waking YouTube MCP..."
 
           curl \
-            --fail \
             --silent \
             --show-error \
             --max-time 30 \
-            "$WAKE_URL"
+            "$WAKE_URL" || true
 
           echo
           echo "YouTube MCP wake request completed."
@@ -44,11 +43,10 @@ jobs:
           echo "Waking second service..."
 
           curl \
-            --fail \
             --silent \
             --show-error \
             --max-time 30 \
-            "$WAKE_URL"
+            "$WAKE_URL" || true
 
           echo
           echo "Second service wake request completed."
