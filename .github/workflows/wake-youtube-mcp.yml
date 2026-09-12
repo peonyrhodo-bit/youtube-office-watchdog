@@ -1,3 +1,4 @@
+```yaml
 name: YouTube Office Watchdog
 
 on:
@@ -59,12 +60,18 @@ jobs:
                 --show-error \
                 --output /dev/null \
                 --write-out "%{http_code}" \
-                "$URL" \
-                || echo "000")
+                "$URL" 2>&1)
+
+              CURL_EXIT_CODE=$?
+
+              if [[ "$CURL_EXIT_CODE" -ne 0 ]]; then
+                echo "No response: curl exit code ${CURL_EXIT_CODE}."
+                HTTP_CODE="000"
+              fi
 
               echo "HTTP response: ${HTTP_CODE}"
 
-              if [[ "$HTTP_CODE" != "000" ]] && [[ "$HTTP_CODE" -lt 500 ]]; then
+              if [[ "$HTTP_CODE" =~ ^[0-9]+$ ]] && [[ "$HTTP_CODE" -ge 100 ]] && [[ "$HTTP_CODE" -lt 500 ]]; then
                 echo "OK: ${NAME} responded."
                 SUCCESS=1
                 break
@@ -79,7 +86,7 @@ jobs:
 
             if [[ "$SUCCESS" -eq 0 ]]; then
               echo
-              echo "ERROR: ${NAME} did not respond after ${MAX_ATTEMPTS} attempts."
+              echo "ERROR: ${NAME} did not respond successfully after ${MAX_ATTEMPTS} attempts."
               FAILED=1
             fi
           done
@@ -96,3 +103,4 @@ jobs:
           echo "WATCHDOG RESULT: ONE OR MORE SERVICES FAILED"
           echo "========================================"
           exit 1
+```
