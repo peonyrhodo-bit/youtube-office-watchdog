@@ -1,10 +1,8 @@
-```yaml
 name: YouTube Office Watchdog
 
 on:
   schedule:
     - cron: "*/12 * * * *"
-
   workflow_dispatch:
 
 jobs:
@@ -57,16 +55,16 @@ jobs:
                 --connect-timeout 10 \
                 --max-time 30 \
                 --silent \
-                --show-error \
                 --output /dev/null \
                 --write-out "%{http_code}" \
-                "$URL" 2>&1)
+                "$URL" 2>/dev/null)
 
               CURL_EXIT_CODE=$?
 
               if [[ "$CURL_EXIT_CODE" -ne 0 ]]; then
-                echo "No response: curl exit code ${CURL_EXIT_CODE}."
                 HTTP_CODE="000"
+                echo "No response from service."
+                echo "Curl exit code: ${CURL_EXIT_CODE}"
               fi
 
               echo "HTTP response: ${HTTP_CODE}"
@@ -86,7 +84,7 @@ jobs:
 
             if [[ "$SUCCESS" -eq 0 ]]; then
               echo
-              echo "ERROR: ${NAME} did not respond successfully after ${MAX_ATTEMPTS} attempts."
+              echo "ERROR: ${NAME} did not respond after ${MAX_ATTEMPTS} attempts."
               FAILED=1
             fi
           done
@@ -103,4 +101,3 @@ jobs:
           echo "WATCHDOG RESULT: ONE OR MORE SERVICES FAILED"
           echo "========================================"
           exit 1
-```
