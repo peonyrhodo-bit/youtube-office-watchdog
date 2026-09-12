@@ -1,4 +1,94 @@
+name: YouTube Office Watchdog
 
+on:
+  schedule:
+    - cron: "*/12 * * * *"
+  workflow_dispatch:
+
+jobs:
+  wake-services:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wake all Render services
+        env:
+          YOUTUBE_MCP_WAKE_URL: ${{ vars.YOUTUBE_MCP_WAKE_URL }}
+          AI_YOUTUBE_SYSTEM_WAKE_URL: ${{ vars.AI_YOUTUBE_SYSTEM_WAKE_URL }}
+          SITE_INSIGHT_ENGINE_WAKE_URL: ${{ vars.SITE_INSIGHT_ENGINE_WAKE_URL }}
+        shell: bash
+        run: |
+          set -u
+          MAX_ATTEMPTS=5
+          RETRY_DELAY=15
+
+          SERVICES=(
+            "YouTube MCP|${YOUTUBE_MCP_WAKE_URL}"
+            "AI YouTube System|${AI_YOUTUBE_SYSTEM_WAKE_URL}"
+            "Site Insight Engine|${SITE_INSIGHT_ENGINE_WAKE_URL}"
+          )
+
+          FAILED=0
+
+          for SERVICE in "${SERVICES[@]}"; do
+            NAME="${SERVICE%%|*}"
+            URL="${SERVICE#*|}"
+            echo
+            echo "========================================"
+            echo "Service: ${NAME}"
+            echo "URL: ${URL}"
+            echo "========================================"
+
+            if [[ -z "$URL" ]]; then
+              echo "ERROR: URL is not configured."
+              FAILED=1
+              continue
+            fi
+
+            SUCCESS=0
+
+            for ATTEMPT in $(seq 1 "$MAX_ATTEMPTS"); do
+              echo "Attempt ${ATTEMPT}/${MAX_ATTEMPTS}..."
+              HTTP_CODE=$(curl \
+                --connect-timeout 10 \
+                --max-time 30 \
+                --silent \
+                --output /dev/null \
+                --write-out "%{http_code}" \
+                "$URL" 2>/dev/null)
+
+              CURL_EXIT_CODE=$?
+
+              if [[ "$CURL_EXIT_CODE" -ne 0 ]]; then
+                HTTP_CODE="000"
+                echo "No response from service."
+                echo "Curl exit code: ${CURL_EXIT_CODE}"
+              fi
+              echo "HTTP response: ${HTTP_CODE}"
+
+              if [[ "$HTTP_CODE" =~ ^[0-9]+$ ]] && [[ "$HTTP_CODE" -ge 100 ]] && [[ "$HTTP_CODE" -lt 500 ]]; then
+                echo "OK: ${NAME} responded."
+                SUCCESS=1
+                break
+              fi
+              if [[ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]]; then
+                echo "No usable response yet."
+                echo "Waiting ${RETRY_DELAY} seconds before retry..."
+                sleep "$RETRY_DELAY"
+              fi
+            done
+
+            if [[ "$SUCCESS" -eq 0 ]]; then
+              echo
+              echo "ERROR: ${NAME} did not respond after ${MAX_ATTEMPTS} attempts."
+              FAILED=1
+            fi
+          done
+
+          echo
+          echo "========================================"
+
+          if [[ "$FAILED" -eq 0 ]]; then
+            echo "WATCHDOG RESULT: ALL SERVICES RESPONDED"
             echo "========================================"
             exit 0
           fi
