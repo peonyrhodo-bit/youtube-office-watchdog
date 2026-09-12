@@ -1,4 +1,3 @@
-```yaml
 name: YouTube Office Watchdog
 
 on:
@@ -13,6 +12,10 @@ jobs:
 
     steps:
       - name: Wake all Render services
+        env:
+          YOUTUBE_MCP_WAKE_URL: ${{ vars.YOUTUBE_MCP_WAKE_URL }}
+          AI_YOUTUBE_SYSTEM_WAKE_URL: ${{ vars.AI_YOUTUBE_SYSTEM_WAKE_URL }}
+          SITE_INSIGHT_ENGINE_WAKE_URL: ${{ vars.SITE_INSIGHT_ENGINE_WAKE_URL }}
         shell: bash
         run: |
           set -u
@@ -21,9 +24,9 @@ jobs:
           RETRY_DELAY=15
 
           SERVICES=(
-            "YouTube MCP|https://youtube-mcp-u39z.onrender.com/"
-            "AI YouTube System|https://ai-youtube-system.onrender.com/"
-            "Site Insight Engine|https://site-insight-engine.onrender.com/health"
+            "YouTube MCP|${YOUTUBE_MCP_WAKE_URL}"
+            "AI YouTube System|${AI_YOUTUBE_SYSTEM_WAKE_URL}"
+            "Site Insight Engine|${SITE_INSIGHT_ENGINE_WAKE_URL}"
           )
 
           FAILED=0
@@ -37,6 +40,12 @@ jobs:
             echo "Service: ${NAME}"
             echo "URL: ${URL}"
             echo "========================================"
+
+            if [[ -z "$URL" ]]; then
+              echo "ERROR: URL is not configured."
+              FAILED=1
+              continue
+            fi
 
             SUCCESS=0
 
@@ -87,4 +96,3 @@ jobs:
           echo "WATCHDOG RESULT: ONE OR MORE SERVICES FAILED"
           echo "========================================"
           exit 1
-```
