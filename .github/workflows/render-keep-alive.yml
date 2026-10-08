@@ -1,0 +1,67 @@
+name: Render Keep Alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  wake-render-services:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wake all three Render services in parallel
+        shell: bash
+        run: |
+          set -u
+
+          services=(
+            "site-insight-engine|https://site-insight-engine.onrender.com/"
+            "ai-youtube-system|https://ai-youtube-system.onrender.com/"
+            "youtube-mcp-u39z|https://youtube-mcp-u39z.onrender.com/"
+          )
+
+          pids=()
+
+          for service in "${services[@]}"; do
+            name="${service%%|*}"
+            url="${service#*|}"
+
+            (
+              echo "Waking ${name}..."
+              code=$(curl \
+                --location \
+                --connect-timeout 15 \
+                --max-time 120 \
+                --silent \
+                --show-error \
+                --output /dev/null \
+                --write-out "%{http_code}" \
+                "${url}" 2>&1)
+              exit_code=$?
+
+              if [ "${exit_code}" -eq 0 ]; then
+                echo "${name}: HTTP ${code} — request completed"
+              else
+                echo "${name}: curl failed with exit code ${exit_code}"
+              fi
+
+              # Any HTTP response means Render received the request.
+              # 404 from youtube-mcp-u39z is expected and still wakes the service.
+            ) &
+            pids+=($!)
+          done
+
+          failed=0
+          for pid in "${pids[@]}"; do
+            if ! wait "${pid}"; then
+              failed=1
+            fi
+          done
+
+          if [ "${failed}" -eq 0 ]; then
+            echo "All three wake-up requests completed."
+          else
+            echo "One or more wake-up requests failed."
+            exit 1
+          fi
