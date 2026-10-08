@@ -1,6 +1,9 @@
 name: Render Keep Alive
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     # Every 5 minutes, offset from the top of the hour to reduce GitHub Actions load-related delays.
     - cron: "2-59/5 * * * *"
