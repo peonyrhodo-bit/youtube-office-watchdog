@@ -7,9 +7,9 @@ on:
       - main
     paths:
       - ".github/workflows/keep-render-awake.yml"
-  # Avoid the busiest minute of each hour; still run every five minutes.
+  # Run every five minutes, offset from the busiest minute of the hour.
   schedule:
-    - cron: "2-57/5 * * * *"
+    - cron: "7/5 * * * *"
   workflow_dispatch:
 
 permissions:
