@@ -1,4 +1,3 @@
-
 name: Keep Render Services Awake
 
 on:
@@ -8,9 +7,9 @@ on:
       - main
     paths:
       - ".github/workflows/keep-render-awake.yml"
-  # Run every five minutes, offset from the busiest minute of the hour.
+  # First hourly ping at minute 7.
   schedule:
-    - cron: "7/5 * * * *"
+    - cron: "7 * * * *"
   workflow_dispatch:
 
 permissions:
