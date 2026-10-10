@@ -1,0 +1,22 @@
+name: Schedule Diagnostic Test
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scheduler-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Record scheduler heartbeat
+        shell: bash
+        run: |
+          echo "SCHEDULE_DIAGNOSTIC"
+          echo "Event: ${GITHUB_EVENT_NAME}"
+          echo "UTC time: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo "Run ID: ${GITHUB_RUN_ID}"
